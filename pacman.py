@@ -4,7 +4,7 @@ import numpy as np
 # requires CCMSuite https://github.com/tcstewar/ccmsuite/
 import ccm.lib.grid
 import ccm.lib.continuous
-import ccm.ui.nengo
+import ui
 
 mymap="""
 #######
@@ -20,16 +20,19 @@ class Cell(ccm.lib.grid.Cell):
     def color(self):
         if self.wall:
             return 'black'
+        if self.food:
+            return 'yellow'
         return None
     def load(self, char):
         if char == '#':
             self.wall = True
+        self.food = True
 
 world = ccm.lib.grid.World(Cell, map=mymap, directions=4)
 
 body = ccm.lib.continuous.Body()
 world.add(body, x=1, y=2, dir=2)
-
+body.score = 0
 
 
 model = nengo.Network(seed=2)
@@ -41,9 +44,13 @@ with model:
         max_rotate = 10.0
         body.turn(rotation * dt * max_rotate)
         body.go_forward(speed * dt * max_speed)
+        
+        if body.cell.food:
+            body.score += 1
+            body.cell.food = False
     movement = nengo.Node(move, size_in=2)
 
-    env = ccm.ui.nengo.GridNode(world, dt=0.005)
+    env = ui.GridNode(world, dt=0.005)
 
     def detect(t):
         angles = (np.linspace(-0.5, 0.5, 3) + body.dir ) % world.directions
