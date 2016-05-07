@@ -1,5 +1,6 @@
 import random
 
+import numpy as np
 import nengo
 
 import cellular
@@ -131,6 +132,48 @@ class PacmanWorld(nengo.Network):
                 html = '<center>%s</center>' % html
                 score._nengo_html_ = html
             self.score = nengo.Node(score)
+
+            def obstacles(t):
+                angles = np.linspace(-1, 1, 5) + self.pacman.dir
+                angles = angles % self.world.directions
+                return [self.pacman.detect(d, max_distance=4)[0] for d in angles]
+            self.obstacles = nengo.Node(obstacles)
+
+            def detect_food(t):
+                x = 0
+                y = 0
+                for cell in self.world.find_cells(lambda cell:cell.food):
+                    dir = self.pacman.get_direction_to(cell)
+                    dist = self.pacman.get_distance_to(cell)
+                    rel_dir = dir - self.pacman.dir
+                    strength = 1.0 / dist
+
+                    dx = np.sin(rel_dir * np.pi / 2) * strength
+                    dy = np.cos(rel_dir * np.pi / 2) * strength
+
+                    x += dx
+                    y += dy
+                return x, y
+            self.detect_food = nengo.Node(detect_food)
+
+            def detect_enemy(t):
+                x = 0
+                y = 0
+                for ghost in self.enemies:
+                    dir = self.pacman.get_direction_to(ghost)
+                    dist = self.pacman.get_distance_to(ghost)
+                    rel_dir = dir - self.pacman.dir
+                    strength = 1.0 / dist
+
+                    dx = np.sin(rel_dir * np.pi / 2) * strength
+                    dy = np.cos(rel_dir * np.pi / 2) * strength
+
+                    x += dx
+                    y += dy
+                return x, y
+            self.detect_enemy = nengo.Node(detect_enemy)
+
+
 
     def update_ghost(self, ghost):
         dt = 0.001
