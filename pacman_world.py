@@ -58,10 +58,20 @@ class GridNode(nengo.Node):
             color = getattr(agent, 'color', 'blue')
             if callable(color):
                 color = color()
-            agent = ('<polygon points="0.25,0.25 -0.25,0.25 0,-0.5"'
+            agent_poly = ('<polygon points="0.25,0.25 -0.25,0.25 0,-0.5"'
                      ' style="fill:%s" transform="translate(%f,%f) rotate(%f)"/>'
                      % (color, agent.x+0.5, agent.y+0.5, direction))
-            agents.append(agent)
+            agents.append(agent_poly)
+            if hasattr(agent, 'obstacle_distances'):
+                angles = np.linspace(270, 90, len(agent.obstacle_distances))
+                for i, angle in enumerate(angles):
+                    x2 = agent.obstacle_distances[i]*np.sin(angle*np.pi/180)
+                    y2 = agent.obstacle_distances[i]*np.cos(angle*np.pi/180)
+                    line = ('<line x1="0" y1="0" x2="%f" y2="%f" style="stroke:gray;stroke-width:0.1" '
+                            'transform="translate(%f,%f) rotate(%f)"/>'
+                            % (x2, y2, agent.x+0.5, agent.y+0.5, direction))
+                    agents.append(line)
+
 
         svg = '''<svg width="100%%" height="100%%" viewbox="0 0 %d %d">
             %s
@@ -136,7 +146,8 @@ class PacmanWorld(nengo.Network):
             def obstacles(t):
                 angles = np.linspace(-1, 1, 5) + self.pacman.dir
                 angles = angles % self.world.directions
-                return [self.pacman.detect(d, max_distance=4)[0] for d in angles]
+                self.pacman.obstacle_distances = [self.pacman.detect(d, max_distance=4)[0] for d in angles]
+                return self.pacman.obstacle_distances
             self.obstacles = nengo.Node(obstacles)
 
             def detect_food(t):
