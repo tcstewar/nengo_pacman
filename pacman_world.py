@@ -180,7 +180,7 @@ class PacmanWorld(nengo.Network):
 
             # Sets up the node for the obstacles (this factors in angles and distances towards respective obstacles)
             def obstacles(t):
-                angles = np.linspace(-1, 1, 5) + self.pacman.dir
+                angles = np.linspace(-0.5, 0.5, 3) + self.pacman.dir
                 angles = angles % self.world.directions
                 self.pacman.obstacle_distances = [self.pacman.detect(d, max_distance=4*2)[0] for d in angles]
                 return self.pacman.obstacle_distances
@@ -196,9 +196,9 @@ class PacmanWorld(nengo.Network):
                     dir = self.pacman.get_direction_to(cell)
                     dist = self.pacman.get_distance_to(cell)
                     rel_dir = dir - self.pacman.dir
-                    if dist > 5: 
+                    if dist > 5:
                         continue
-                    if dist>=0.05: 
+                    if dist>=0.05:
                         strength = 1.0 / dist
                     else:
                         continue
