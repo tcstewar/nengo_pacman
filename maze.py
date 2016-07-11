@@ -1,6 +1,6 @@
 import numpy as np
 
-def generateMaze(num_rows, num_cols, num_ghosts=3, seed=None):
+def generateMaze(num_rows, num_cols, num_ghosts=3, seed=None, num_passage=2):
 
     rng = np.random.RandomState(seed=seed)
 
@@ -57,6 +57,22 @@ def generateMaze(num_rows, num_cols, num_ghosts=3, seed=None):
     	# retrace one step back in history if no move is possible
             r,c = history.pop()
 
+
+    walls = np.where(M[1:-1,1:-1,:2] == 0)
+    chosen = rng.choice(np.arange(len(walls[0])),
+                              size=num_passage, replace=False)
+    for i in chosen:
+        M[walls[0][i]+1, walls[1][i]+1, walls[2][i]] = 1
+        if walls[2][i] == 0:
+            M[walls[0][i]+1, walls[1][i]+1-1, 2] = 1
+        elif walls[2][i] == 2:
+            M[walls[0][i]+1, walls[1][i]+1+1, 0] = 1
+        elif walls[2][i] == 1:
+            M[walls[0][i]+1-1, walls[1][i]+1, 3] = 1
+        elif walls[2][i] == 3:
+            M[walls[0][i]+1+1, walls[1][i]+1, 1] = 1
+
+
     hashes = ""
     # Generate the image for display
     for row in range(0,num_rows):
@@ -98,3 +114,5 @@ def generateMaze(num_rows, num_cols, num_ghosts=3, seed=None):
 
     return new
 
+if __name__ == '__main__':
+    print generateMaze(4, 4, num_ghosts=3, seed=None)
