@@ -67,3 +67,13 @@ with model:
     def run_away(x):
         return -20*x[1], -5*x[0]
     nengo.Connection(enemy, fear_move, function=run_away, transform=1)
+
+
+    ignore_food = nengo.Node(0)
+    nengo.Connection(ignore_food, food.neurons, transform=np.ones((food.n_neurons,1))*-3)
+
+    ignore_enemy = nengo.Node(0)
+    nengo.Connection(ignore_enemy, enemy.neurons, transform=np.ones((enemy.n_neurons,1))*-3)    
+    
+    ignore_obstacles = nengo.Node(0)
+    nengo.Connection(ignore_obstacles, obstacles.neurons, transform=np.ones((obstacles.n_neurons,1))*-3)        
