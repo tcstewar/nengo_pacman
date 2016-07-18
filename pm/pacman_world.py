@@ -123,6 +123,7 @@ class PacmanWorld(nengo.Network):
         self.pacman = body.Player("pacman", "eating", 2, "yellow", pacman_speed, pacman_rotate)
         self.ghost_rotate = ghost_rotate
         self.ghost_speed = ghost_speed
+        self.last_t = None
 
         # Init for starting positions of the pacman and for food, etc.
         starting = list(self.world.find_cells(lambda cell: cell.pacman_start))
@@ -146,6 +147,10 @@ class PacmanWorld(nengo.Network):
 
             #Pacman's move function -- called every 0.001 second (set using dt)
             def move(t, x):
+                if self.last_t is not None and t < self.last_t:
+                    self.reset()
+                self.last_t = t
+
                 speed, rotation = x
                 dt = 0.001
 
@@ -171,7 +176,7 @@ class PacmanWorld(nengo.Network):
             def score(t):
                 html = '<h1>%d / %d</h1>' % (self.pacman.score, total)
                 if self.completion_time is not None:
-                    html += 'Completed in<br/>%1.3f seconds' % self.completion_time
+                    html += '<div style="background:yellow">Completed in<br/>%1.3f seconds</div>' % self.completion_time
                 else:
                     html += '%1.3f seconds' % t
                 html = '<center>%s</center>' % html
@@ -272,6 +277,7 @@ class PacmanWorld(nengo.Network):
     # Resets the pacman's position after it loses
     def reset(self):
         self.pacman.score = 0
+        self.completion_time = None
 
         # Runs through the rows in the world and reinializes cells
         for row in self.world.grid:
