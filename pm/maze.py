@@ -1,5 +1,19 @@
 import numpy as np
 
+def pick_one(rng, options):
+    item = rng.randint(len(options))
+    return options[item]
+
+def pick_few(rng, options, count):
+    items = []
+    assert count < len(options)
+    while len(items) < count:
+        item = rng.randint(len(options))
+        if item not in items:
+            items.append(item)
+    return options[items]
+
+
 def generateMaze(num_rows, num_cols, num_ghosts=3, seed=None, num_passage=2,
                  empty=False):
 
@@ -40,7 +54,7 @@ def generateMaze(num_rows, num_cols, num_ghosts=3, seed=None, num_passage=2,
         if len(check): # If there is a valid cell to move to.
             # Mark the walls between cells as open if we move
             history.append([r,c])
-            move_direction = rng.choice(check)
+            move_direction = pick_one(rng, check)
             if move_direction == 'L':
                 M[r,c,0] = 1
                 c = c-1
@@ -66,8 +80,8 @@ def generateMaze(num_rows, num_cols, num_ghosts=3, seed=None, num_passage=2,
         walls = np.where(M[:,:,:2] == 0)
         if num_passage > len(walls[0]):
             num_passage = len(walls[0])
-        chosen = rng.choice(np.arange(len(walls[0])),
-                                  size=num_passage, replace=False)
+        chosen = pick_few(rng, np.arange(len(walls[0])),
+                                              num_passage)
         for i in chosen:
 
             if walls[2][i] == 0:
@@ -104,8 +118,8 @@ def generateMaze(num_rows, num_cols, num_ghosts=3, seed=None, num_passage=2,
         image[1:-1, 1:-1] = 255
 
     spaces = np.where(image == 255)
-    chosen = rng.choice(np.arange(len(spaces[0])),
-                              size=num_ghosts, replace=False)
+    chosen = pick_few(rng, np.arange(len(spaces[0])),
+                                          num_ghosts)
 
     for i in chosen:
         image[spaces[0][i], spaces[1][i]] = 2
