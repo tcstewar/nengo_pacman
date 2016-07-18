@@ -1,29 +1,16 @@
 import nengo
-import pacman_world
-reload(pacman_world)
+import pm
 import numpy as np
-import body
-import maze
 
-# Nengo Network
 model = nengo.Network()
-mymap = maze.generateMaze(num_rows=5, num_cols=5, num_ghosts=1, seed=1)
-
-# Initliazing the nengo model, network and game map
 
 with model:
+    pacman = pm.pacman_world.PacmanWorld(
+                    pm.maze.generateMaze(num_rows=5, num_cols=5, 
+                                         num_ghosts=1, seed=1))
 
-    pacman = pacman_world.PacmanWorld(mymap)
-
-    # create the movement control
-    # - dimensions are speed (forward|backward) and rotation (left|right)
     move = nengo.Ensemble(n_neurons=100, dimensions=2, radius=3)
-
     nengo.Connection(move, pacman.move, synapse = 0.)
-
-    # sense food
-    # - angle is the direction to the food
-    # - radius is the strength (1.0/distance)
 
     food = nengo.Ensemble(n_neurons=100, dimensions=2)
     nengo.Connection(pacman.detect_food, food, synapse = 0.)
@@ -61,9 +48,6 @@ with model:
     nengo.Connection(fear_move, move, synapse=0)
 
 
-    # run away from enemies
-    # - angle is the direction to the enemies
-    # - radius is the strength (1.0/distance)
     def run_away(x):
         return -20*x[1], -5*x[0]
     nengo.Connection(enemy, fear_move, function=run_away, transform=1)
