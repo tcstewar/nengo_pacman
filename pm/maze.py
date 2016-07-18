@@ -1,6 +1,7 @@
 import numpy as np
 
-def generateMaze(num_rows, num_cols, num_ghosts=3, seed=None, num_passage=2):
+def generateMaze(num_rows, num_cols, num_ghosts=3, seed=None, num_passage=2,
+                 empty=False):
 
     rng = np.random.RandomState(seed=seed)
 
@@ -16,6 +17,9 @@ def generateMaze(num_rows, num_cols, num_ghosts=3, seed=None, num_passage=2):
     r = 0
     c = 0
     history = [(r,c)] # The history is the
+
+    if empty:
+        history = []
 
     # Trace a path though the cells of the maze and open walls along the path.
     # We do this with a while loop, repeating the loop until there is no history,
@@ -57,44 +61,47 @@ def generateMaze(num_rows, num_cols, num_ghosts=3, seed=None, num_passage=2):
     	# retrace one step back in history if no move is possible
             r,c = history.pop()
 
+    if not empty:
 
-    walls = np.where(M[1:-1,1:-1,:2] == 0)
-    chosen = rng.choice(np.arange(len(walls[0])),
-                              size=num_passage, replace=False)
-    for i in chosen:
-        M[walls[0][i]+1, walls[1][i]+1, walls[2][i]] = 1
-        if walls[2][i] == 0:
-            M[walls[0][i]+1, walls[1][i]+1-1, 2] = 1
-        elif walls[2][i] == 2:
-            M[walls[0][i]+1, walls[1][i]+1+1, 0] = 1
-        elif walls[2][i] == 1:
-            M[walls[0][i]+1-1, walls[1][i]+1, 3] = 1
-        elif walls[2][i] == 3:
-            M[walls[0][i]+1+1, walls[1][i]+1, 1] = 1
+        walls = np.where(M[:,:,:2] == 0)
+        if num_passage > len(walls[0]):
+            num_passage = len(walls[0])
+        chosen = rng.choice(np.arange(len(walls[0])),
+                                  size=num_passage, replace=False)
+        for i in chosen:
+
+            if walls[2][i] == 0:
+                if walls[1][i] > 0:
+                    M[walls[0][i], walls[1][i], 0] = 1
+                    M[walls[0][i], walls[1][i]-1, 2] = 1
+            #elif walls[2][i] == 2:
+            #    M[walls[0][i], walls[1][i]+1, 0] = 1
+            elif walls[2][i] == 1:
+                if walls[0][i] > 0:
+                    M[walls[0][i], walls[1][i], 1] = 1
+                    M[walls[0][i]-1, walls[1][i], 3] = 1
+            #elif walls[2][i] == 3:
+            #    M[walls[0][i]+1, walls[1][i], 1] = 1
 
 
-    hashes = ""
-    # Generate the image for display
-    for row in range(0,num_rows):
-        for col in range(0,num_cols):
+    if not empty:
+        # Generate the image for display
+        for row in range(0,num_rows):
+            for col in range(0,num_cols):
 
-            cell_data = M[row,col]
-            for i in range(10*row+1,10*row+9):
-                image[i,range(10*col+1,10*col+9)] = 255
-                if cell_data[0] == 1:
-                    image[range(10*row+1,10*row+9),10*col] = 255
-                    hashes += " "
-                if cell_data[1] == 1:
-                    image[10*row,range(10*col+1,10*col+9)] = 255
-                    hashes += " "
-                if cell_data[2] == 1:
-                    image[range(10*row+1,10*row+9),10*col+9] = 255
-                    hashes += " "
-                if cell_data[3] == 1:
-                    image[10*row+9,range(10*col+1,10*col+9)] = 255
-                    hashes += " "
-                else:
-                    hashes += "#"
+                cell_data = M[row,col]
+                for i in range(10*row+1,10*row+9):
+                    image[i,range(10*col+1,10*col+9)] = 255
+                    if cell_data[0] == 1:
+                        image[range(10*row+1,10*row+9),10*col] = 255
+                    if cell_data[1] == 1:
+                        image[10*row,range(10*col+1,10*col+9)] = 255
+                    if cell_data[2] == 1:
+                        image[range(10*row+1,10*row+9),10*col+9] = 255
+                    if cell_data[3] == 1:
+                        image[10*row+9,range(10*col+1,10*col+9)] = 255
+    else:
+        image[1:-1, 1:-1] = 255
 
     spaces = np.where(image == 255)
     chosen = rng.choice(np.arange(len(spaces[0])),
